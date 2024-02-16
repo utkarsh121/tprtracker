@@ -1,0 +1,6 @@
+CREATE TABLE clients (
+    clientID INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL
+);
