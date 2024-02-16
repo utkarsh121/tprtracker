@@ -5,7 +5,7 @@ function isDatabaseSetupDone() {
 }
 
 // Function to execute the SQL script to set up the database tables
-function setupDatabase($servername, $username, $password, $dbname) {
+function setupDatabase($servername, $username, $password, $dbname, $tableprefix) {
     // Create connection
     $conn = new mysqli($servername, $username, $password);
 
@@ -17,9 +17,9 @@ function setupDatabase($servername, $username, $password, $dbname) {
     // Create database
     $sql_create_db = "CREATE DATABASE IF NOT EXISTS $dbname";
     if ($conn->query($sql_create_db) === TRUE) {
-        echo "Database created successfully";
+        echo "Database created successfully<br>";
     } else {
-        echo "Error creating database: " . $conn->error;
+        echo "Error creating database: " . $conn->error . "<br>";
         return false;
     }
 
@@ -29,13 +29,16 @@ function setupDatabase($servername, $username, $password, $dbname) {
     // Read SQL script from file
     $sql_script = file_get_contents("db/create_tables.sql");
 
+    // Replace table prefix placeholders in SQL script
+    $sql_script = str_replace('%PREFIX%', $tableprefix, $sql_script);
+
     // Execute SQL script to create table
     if ($conn->multi_query($sql_script) === TRUE) {
-        echo "Database setup successful";
+        echo "Database setup successful<br>";
         // Create a file to indicate that setup is done
         file_put_contents('setup_done.txt', 'Database setup done');
     } else {
-        echo "Error creating database tables: " . $conn->error;
+        echo "Error creating database tables: " . $conn->error . "<br>";
         return false;
     }
 
@@ -51,12 +54,13 @@ if (isset($_POST['setup'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
     $dbname = $_POST['dbname'];
+    $tableprefix = $_POST['tableprefix'];
 
     // Execute database setup
-    if (setupDatabase($servername, $username, $password, $dbname)) {
-        // Redirect to welcome page if setup is successful
-        header('Location: welcome.php');
-        exit();
+    if (setupDatabase($servername, $username, $password, $dbname, $tableprefix)) {
+        $setupStatus = "Success";
+    } else {
+        $setupStatus = "Failed";
     }
 }
 ?>
@@ -86,8 +90,15 @@ if (isset($_POST['setup'])) {
         <input type="password" id="password" name="password"><br><br>
         <label for="dbname">Database Name:</label>
         <input type="text" id="dbname" name="dbname" required><br><br>
+        <label for="tableprefix">Table Prefix:</label>
+        <input type="text" id="tableprefix" name="tableprefix" value="app_" required><br><br>
         <button type="submit" name="setup">First run setup</button>
     </form>
+    <?php endif; ?>
+
+    <?php if (isset($setupStatus)): ?>
+    <!-- Show setup status -->
+    <p>Setup <?php echo $setupStatus; ?></p>
     <?php endif; ?>
 </div>
 
